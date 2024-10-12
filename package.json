@@ -1,0 +1,22 @@
+{
+  "name": "maruautobot",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun run index.ts --watch"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@grammyjs/menu": "^1.2.2",
+    "axios": "^1.7.7",
+    "btch-downloader": "^2.3.2",
+    "grammy": "^1.30.0",
+    "priyansh-ig-downloader": "^2.0.4"
+  }
+}
