@@ -5,6 +5,7 @@ import {
   InputMediaBuilder,
   GrammyError,
   HttpError,
+  InputFile,
 } from "grammy";
 import type { SessionFlavor } from "grammy";
 import { Menu } from "@grammyjs/menu";
@@ -41,7 +42,7 @@ const menu = new Menu<MyContext>("root-menu").submenu(
 
 const downloaderMenu = new Menu<MyContext>("downloader-menu")
   .text("tiktok", (ctx) => {
-    ctx.reply("kasih aku url tiktoknya 😁");
+    ctx.reply("kasih aku url tiktoknya 😁\n\n⚠️ photo slides belum support");
     ctx.session.waitingForTikTokUrl = true;
     ctx.session.emptySession = false;
   })
@@ -60,23 +61,30 @@ bot.use(downloaderMenu);
 
 bot.command("start", (ctx) => {
   ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\n👇🏼 pilih menu di bawah untuk memulai`,
+    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
     { reply_markup: menu }
   );
 });
 
 bot.command("menu", (ctx) => {
   ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\n👇🏼 pilih menu di bawah untuk memulai`,
+    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
     { reply_markup: menu }
   );
 });
 
 bot.command("mulai", (ctx) => {
   ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\n👇🏼 pilih menu di bawah untuk memulai`,
+    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
     { reply_markup: menu }
   );
+});
+
+bot.command("cancel", (ctx) => {
+  ctx.session.emptySession = true;
+  ctx.session.waitingForTikTokUrl = false;
+  ctx.session.waitingForInstagramUrl = false;
+  ctx.reply("🔄 state direset");
 });
 
 bot.on("message:text", async (ctx) => {
@@ -89,10 +97,28 @@ bot.on("message:text", async (ctx) => {
 
       try {
         const urlInfo = await getTikTokVideo(url);
-        await ctx.replyWithVideo(urlInfo.video[0]);
-        ctx.reply(`✅ video tiktok berhasil diunduh`);
+        if (urlInfo.result?.type === "image") {
+          if (urlInfo.result.images && urlInfo.result.images.length > 1) {
+            for (const i of urlInfo.result.images) {
+              await ctx.replyWithPhoto(new InputFile(new URL(i)));
+            }
+
+            ctx.reply(`✅ foto tiktok berhasil diunduh`);
+          } else {
+            ctx.reply(`😅 gagal unduh, foto tidak ditemukan...`);
+          }
+        } else {
+          if (urlInfo.result?.video) {
+            await ctx.replyWithVideo(
+              new InputFile(new URL(urlInfo.result.video))
+            );
+            ctx.reply(`✅ video tiktok berhasil diunduh`);
+          } else {
+            ctx.reply(`😅 gagal unduh, video tidak ditemukan...`);
+          }
+        }
       } catch (error: any) {
-        ctx.reply(`😅 gagal unduh video, coba lagi aja...`);
+        ctx.reply(`😅 gagal unduh, coba lagi aja...`);
       } finally {
         ctx.session.emptySession = true;
       }
@@ -110,28 +136,58 @@ bot.on("message:text", async (ctx) => {
 
       try {
         const urlInfo = await getInstagramPost(url);
+        if (
+          urlInfo.video &&
+          (urlInfo.image === undefined || urlInfo.image.length === 0)
+        ) {
+          const igVideo = urlInfo.video;
 
-        const igVideo = urlInfo.video;
-        const igImage = urlInfo.image;
+          const videoGroup = igVideo.map((video: any) => {
+            return InputMediaBuilder.video(video.video);
+          });
 
-        const videoGroup = igVideo.map((video: any) => {
-          return InputMediaBuilder.video(video.video);
-        });
+          for (const i of videoGroup) {
+            await ctx.replyWithVideo(i.media);
+          }
 
-        const imageGroup = igImage.map((image: any) => {
-          return InputMediaBuilder.photo(image);
-        });
+          ctx.reply(`✅ berhasil diunduh`);
+        } else if (
+          urlInfo.image &&
+          (urlInfo.video === undefined || urlInfo.video.length === 0)
+        ) {
+          const igImage = urlInfo.image;
 
-        const mediaGroup = [...imageGroup];
+          const imageGroup = igImage.map((image: any) => {
+            return InputMediaBuilder.photo(image);
+          });
 
-        await ctx.replyWithMediaGroup(mediaGroup);
-        for (const i of videoGroup) {
-          await ctx.replyWithVideo(i.media);
+          for (const i of imageGroup) {
+            await ctx.replyWithPhoto(i.media);
+          }
+
+          ctx.reply(`✅ berhasil diunduh`);
+        } else {
+          const igVideo = urlInfo.video;
+          const igImage = urlInfo.image;
+
+          const videoGroup = igVideo.map((video: any) => {
+            return InputMediaBuilder.video(video.video);
+          });
+
+          const imageGroup = igImage.map((image: any) => {
+            return InputMediaBuilder.photo(image);
+          });
+
+          for (const i of imageGroup) {
+            await ctx.replyWithPhoto(i.media);
+          }
+          for (const i of videoGroup) {
+            await ctx.replyWithVideo(i.media);
+          }
+          ctx.reply(`✅ berhasil diunduh`);
         }
-        ctx.reply(`✅ berhasil diunduh`);
       } catch (error: any) {
         ctx.reply(`😅 gagal unduh, coba lagi aja...`);
-        console.log(error);
       } finally {
         ctx.session.emptySession = true;
       }
