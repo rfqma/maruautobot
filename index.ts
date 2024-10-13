@@ -42,7 +42,7 @@ const menu = new Menu<MyContext>("root-menu").submenu(
 
 const downloaderMenu = new Menu<MyContext>("downloader-menu")
   .text("tiktok", (ctx) => {
-    ctx.reply("kasih aku url tiktoknya 😁\n\n⚠️ photo slides belum support");
+    ctx.reply("kasih aku url tiktoknya 😁");
     ctx.session.waitingForTikTokUrl = true;
     ctx.session.emptySession = false;
   })
