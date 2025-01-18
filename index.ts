@@ -32,55 +32,62 @@ bot.use(
   })
 );
 
-const downloader = "downloader";
-const backButton = "🔙 kembali";
+// const downloader = "downloader";
+// const backButton = "🔙 kembali";
 
-const menu = new Menu<MyContext>("root-menu").submenu(
-  downloader,
-  "downloader-menu"
-);
+// const menu = new Menu<MyContext>("root-menu").submenu(
+//   downloader,
+//   "downloader-menu"
+// );
 
-const downloaderMenu = new Menu<MyContext>("downloader-menu")
-  .text("tiktok", (ctx) => {
-    ctx.reply("kasih aku url tiktoknya 😁");
-    ctx.session.waitingForTikTokUrl = true;
-    ctx.session.emptySession = false;
-  })
-  .row()
-  .text("instagram", (ctx) => {
-    ctx.reply("kasih aku url instagramnya 😁");
-    ctx.session.waitingForInstagramUrl = true;
-    ctx.session.emptySession = false;
-  })
-  .back(backButton);
+// const downloaderMenu = new Menu<MyContext>("downloader-menu")
+//   .text("tiktok", (ctx) => {
+//     ctx.reply("kasih aku url tiktoknya 😁");
+//     ctx.session.waitingForTikTokUrl = true;
+//     ctx.session.emptySession = false;
+//   })
+//   .row()
+//   .text("instagram", (ctx) => {
+//     ctx.reply("kasih aku url instagramnya 😁");
+//     ctx.session.waitingForInstagramUrl = true;
+//     ctx.session.emptySession = false;
+//   })
+//   .back(backButton);
 
-menu.register(downloaderMenu);
+// menu.register(downloaderMenu);
 
-bot.use(menu);
-bot.use(downloaderMenu);
-
-bot.command("start", (ctx) => {
-  ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
-    { reply_markup: menu }
-  );
-});
-
-bot.command("menu", (ctx) => {
-  ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
-    { reply_markup: menu }
-  );
-});
+// bot.use(menu);
+// bot.use(downloaderMenu);
 
 bot.command("mulai", (ctx) => {
   ctx.reply(
-    `🍥 halooo, ${ctx.from?.first_name}!\n\n🤖 fitur yang tersedia sejauh ini adalah pengunduh instagram dan tiktok\n\nℹ️ /cancel untuk reset state ke semula\n\n👇🏼 pilih menu di bawah untuk memulai`,
-    { reply_markup: menu }
+    `Halo, ${ctx.from?.username}!\n\n📑 /bantuan untuk daftar perintah yang tersedia`
+    // { reply_markup: menu }
   );
 });
 
-bot.command("cancel", (ctx) => {
+bot.command("bantuan", (ctx) => {
+  ctx.reply(
+    `Daftar perintah\n\n/mulai - memulai bot\n/bantuan - melihat perintah yang tersedia\n/tiktok - unduh media tiktok tanpa wm\n/instagram - unduh media instagram\n/reset - reset robot state`
+    // {
+    //   reply_markup: menu,
+    // }
+  );
+});
+
+bot.command("tiktok", (ctx) => {
+  ctx.session.waitingForTikTokUrl = true;
+  ctx.session.emptySession = false;
+  ctx.reply("masukkan url/link tiktok:");
+});
+
+bot.command("instagram", (ctx) => {
+  // ctx.session.waitingForInstagramUrl = true;
+  // ctx.session.emptySession = false;
+  ctx.reply("🚧 menu /instagram sedang dalam perbaikan");
+});
+
+bot.command("reset", (ctx) => {
   ctx.session.emptySession = true;
   ctx.session.waitingForTikTokUrl = false;
   ctx.session.waitingForInstagramUrl = false;
@@ -92,7 +99,7 @@ bot.on("message:text", async (ctx) => {
     const url = ctx.message.text;
 
     if (url.includes("tiktok.com")) {
-      ctx.reply("🚀 proses unduh, tunggu bentar...");
+      ctx.reply("🚀 unduhan diproses, tunggu sebentar...");
       ctx.session.waitingForTikTokUrl = false;
 
       try {
@@ -103,27 +110,27 @@ bot.on("message:text", async (ctx) => {
               await ctx.replyWithPhoto(new InputFile(new URL(i)));
             }
 
-            ctx.reply(`✅ foto tiktok berhasil diunduh`);
+            ctx.reply(`✅ foto berhasil diunduh`);
           } else {
-            ctx.reply(`😅 gagal unduh, foto tidak ditemukan...`);
+            ctx.reply(`❌ unduh gagal, foto tidak ditemukan...`);
           }
         } else {
           if (urlInfo.result?.video) {
             await ctx.replyWithVideo(
               new InputFile(new URL(urlInfo.result.video))
             );
-            ctx.reply(`✅ video tiktok berhasil diunduh`);
+            await ctx.reply(`✅ video berhasil diunduh`);
           } else {
-            ctx.reply(`😅 gagal unduh, video tidak ditemukan...`);
+            ctx.reply(`❌ unduh gagal, video tidak ditemukan...`);
           }
         }
       } catch (error: any) {
-        ctx.reply(`😅 gagal unduh, coba lagi aja...`);
+        ctx.reply(`❌ unduh gagal, coba lagi..`);
       } finally {
         ctx.session.emptySession = true;
       }
     } else {
-      ctx.reply("🔗❌ url tiktoknya invalid");
+      ctx.reply("🔗❌ url/link tiktok invalid");
     }
   }
 
@@ -131,7 +138,7 @@ bot.on("message:text", async (ctx) => {
     const url = ctx.message.text;
 
     if (url.includes("instagram.com")) {
-      ctx.reply("🚀 proses unduh, tunggu bentar...");
+      ctx.reply("🚀 unduhan diproses, tunggu sebentar...");
       ctx.session.waitingForInstagramUrl = false;
 
       try {
@@ -187,17 +194,17 @@ bot.on("message:text", async (ctx) => {
           ctx.reply(`✅ berhasil diunduh`);
         }
       } catch (error: any) {
-        ctx.reply(`😅 gagal unduh, coba lagi aja...`);
+        ctx.reply(`gagal unduh, coba lagi...`);
       } finally {
         ctx.session.emptySession = true;
       }
     } else {
-      ctx.reply("🔗❌ url instagramnya invalid");
+      ctx.reply("🔗❌ url/link instagram invalid");
     }
   }
 
   if (ctx.session.emptySession) {
-    ctx.reply("📃 pilih menu untuk melanjutkan");
+    ctx.reply("📃 /mulai untuk memulai bot");
   }
 });
 
