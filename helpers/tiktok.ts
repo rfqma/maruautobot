@@ -1,4 +1,3 @@
-// import { ttdl } from "btch-downloader";
 import * as tdl from "@tobyg74/tiktok-api-dl";
 
 export const getTikTokVideo = async (url: string) => {

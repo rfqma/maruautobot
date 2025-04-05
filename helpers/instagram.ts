@@ -1,7 +1,6 @@
-// import { igdl } from "btch-downloader";
-import idl from "priyansh-ig-downloader";
+import { instagramGetUrl } from "instagram-url-direct";
 
 export const getInstagramPost = async (url: string) => {
-  const data = await idl(url);
+  const data = await instagramGetUrl(url);
   return data;
 };

@@ -8,7 +8,6 @@ import {
   InputFile,
 } from "grammy";
 import type { SessionFlavor } from "grammy";
-import { Menu } from "@grammyjs/menu";
 import { getTikTokVideo } from "./helpers/tiktok";
 import { getInstagramPost } from "./helpers/instagram";
 
@@ -32,74 +31,46 @@ bot.use(
   })
 );
 
-// const downloader = "downloader";
-// const backButton = "🔙 kembali";
-
-// const menu = new Menu<MyContext>("root-menu").submenu(
-//   downloader,
-//   "downloader-menu"
-// );
-
-// const downloaderMenu = new Menu<MyContext>("downloader-menu")
-//   .text("tiktok", (ctx) => {
-//     ctx.reply("kasih aku url tiktoknya 😁");
-//     ctx.session.waitingForTikTokUrl = true;
-//     ctx.session.emptySession = false;
-//   })
-//   .row()
-//   .text("instagram", (ctx) => {
-//     ctx.reply("kasih aku url instagramnya 😁");
-//     ctx.session.waitingForInstagramUrl = true;
-//     ctx.session.emptySession = false;
-//   })
-//   .back(backButton);
-
-// menu.register(downloaderMenu);
-
-// bot.use(menu);
-// bot.use(downloaderMenu);
-
 bot.command("mulai", (ctx) => {
   ctx.reply(
-    `Halo, ${ctx.from?.username}!\n\n📑 /bantuan untuk daftar perintah yang tersedia`
-    // { reply_markup: menu }
+    `Halo, ${ctx.from?.username}!\n\n📑 /bantuan untuk melihat daftar perintah yang tersedia`
   );
 });
 
 bot.command("bantuan", (ctx) => {
   ctx.reply(
-    `Daftar perintah\n\n/mulai - memulai bot\n/bantuan - melihat perintah yang tersedia\n/tiktok - unduh media tiktok tanpa wm\n/instagram - unduh media instagram\n/reset - reset robot state`
-    // {
-    //   reply_markup: menu,
-    // }
+    `⌨️ Daftar perintah @MaruAutoBot\n\n/mulai > memulai bot\n/bantuan > melihat perintah yang tersedia\n/tiktok > unduh media tiktok tanpa wm\n/instagram > unduh media instagram\n/reset > reset robot state`
   );
 });
 
 bot.command("tiktok", (ctx) => {
+  ctx.session.waitingForInstagramUrl = false;
   ctx.session.waitingForTikTokUrl = true;
   ctx.session.emptySession = false;
   ctx.reply("masukkan url/link tiktok:");
 });
 
 bot.command("instagram", (ctx) => {
+  // ctx.session.waitingForTikTokUrl = false;
   // ctx.session.waitingForInstagramUrl = true;
   // ctx.session.emptySession = false;
-  ctx.reply("🚧 menu /instagram sedang dalam perbaikan");
+  // ctx.reply("masukkan url/link instagram:");
+  ctx.reply("🚧 /instagram sedang dalam perbaikan");
 });
 
 bot.command("reset", (ctx) => {
   ctx.session.emptySession = true;
   ctx.session.waitingForTikTokUrl = false;
   ctx.session.waitingForInstagramUrl = false;
-  ctx.reply("🔄 state direset");
+  ctx.reply("🔄 Berhasil reset state!");
 });
 
 bot.on("message:text", async (ctx) => {
-  if (ctx.session.waitingForTikTokUrl) {
-    const url = ctx.message.text;
+  const url = ctx.message.text;
 
+  if (ctx.session.waitingForTikTokUrl) {
     if (url.includes("tiktok.com")) {
-      ctx.reply("🚀 unduhan diproses, tunggu sebentar...");
+      ctx.reply("🚀 Unduhan sedang dalam proses, tunggu sebentar...");
       ctx.session.waitingForTikTokUrl = false;
 
       try {
@@ -110,96 +81,95 @@ bot.on("message:text", async (ctx) => {
               await ctx.replyWithPhoto(new InputFile(new URL(i)));
             }
 
-            ctx.reply(`✅ foto berhasil diunduh`);
+            ctx.reply(`✅ Berhasil unduh foto!`);
           } else {
-            ctx.reply(`❌ unduh gagal, foto tidak ditemukan...`);
+            ctx.reply(`❌ Gagal unduh foto, foto tidak ditemukan!`);
           }
         } else {
           if (urlInfo.result?.video) {
             await ctx.replyWithVideo(
               new InputFile(new URL(urlInfo.result.video))
             );
-            await ctx.reply(`✅ video berhasil diunduh`);
+            await ctx.reply(`✅ Berhasil unduh video!`);
           } else {
-            ctx.reply(`❌ unduh gagal, video tidak ditemukan...`);
+            ctx.reply(`❌ Gagal unduh video, video tidak ditemukan`);
           }
         }
       } catch (error: any) {
-        ctx.reply(`❌ unduh gagal, coba lagi..`);
+        ctx.reply(`❌ Gagal unduh, coba lagi!`);
       } finally {
         ctx.session.emptySession = true;
       }
     } else {
-      ctx.reply("🔗❌ url/link tiktok invalid");
+      ctx.reply("🔗❌ url/link tiktok tidak valid");
     }
   }
 
   if (ctx.session.waitingForInstagramUrl) {
-    const url = ctx.message.text;
-
     if (url.includes("instagram.com")) {
-      ctx.reply("🚀 unduhan diproses, tunggu sebentar...");
+      ctx.reply("🚀 Unduhan sedang dalam proses, tunggu sebentar...");
       ctx.session.waitingForInstagramUrl = false;
 
       try {
         const urlInfo = await getInstagramPost(url);
-        if (
-          urlInfo.video &&
-          (urlInfo.image === undefined || urlInfo.image.length === 0)
-        ) {
-          const igVideo = urlInfo.video;
+        console.log(urlInfo);
+        // if (
+        //   urlInfo.video &&
+        //   (urlInfo.image === undefined || urlInfo.image.length === 0)
+        // ) {
+        //   const igVideo = urlInfo.video;
 
-          const videoGroup = igVideo.map((video: any) => {
-            return InputMediaBuilder.video(video.video);
-          });
+        //   const videoGroup = igVideo.map((video: any) => {
+        //     return InputMediaBuilder.video(video.video);
+        //   });
 
-          for (const i of videoGroup) {
-            await ctx.replyWithVideo(i.media);
-          }
+        //   for (const i of videoGroup) {
+        //     await ctx.replyWithVideo(i.media);
+        //   }
 
-          ctx.reply(`✅ berhasil diunduh`);
-        } else if (
-          urlInfo.image &&
-          (urlInfo.video === undefined || urlInfo.video.length === 0)
-        ) {
-          const igImage = urlInfo.image;
+        //   ctx.reply(`✅ Berhasil unduh!`);
+        // } else if (
+        //   urlInfo.image &&
+        //   (urlInfo.video === undefined || urlInfo.video.length === 0)
+        // ) {
+        //   const igImage = urlInfo.image;
 
-          const imageGroup = igImage.map((image: any) => {
-            return InputMediaBuilder.photo(image);
-          });
+        //   const imageGroup = igImage.map((image: any) => {
+        //     return InputMediaBuilder.photo(image);
+        //   });
 
-          for (const i of imageGroup) {
-            await ctx.replyWithPhoto(i.media);
-          }
+        //   for (const i of imageGroup) {
+        //     await ctx.replyWithPhoto(i.media);
+        //   }
 
-          ctx.reply(`✅ berhasil diunduh`);
-        } else {
-          const igVideo = urlInfo.video;
-          const igImage = urlInfo.image;
+        //   ctx.reply(`✅ Berhasil unduh!`);
+        // } else {
+        //   const igVideo = urlInfo.video;
+        //   const igImage = urlInfo.image;
 
-          const videoGroup = igVideo.map((video: any) => {
-            return InputMediaBuilder.video(video.video);
-          });
+        //   const videoGroup = igVideo.map((video: any) => {
+        //     return InputMediaBuilder.video(video.video);
+        //   });
 
-          const imageGroup = igImage.map((image: any) => {
-            return InputMediaBuilder.photo(image);
-          });
+        //   const imageGroup = igImage.map((image: any) => {
+        //     return InputMediaBuilder.photo(image);
+        //   });
 
-          for (const i of imageGroup) {
-            await ctx.replyWithPhoto(i.media);
-          }
-          for (const i of videoGroup) {
-            await ctx.replyWithVideo(i.media);
-          }
-          ctx.reply(`✅ berhasil diunduh`);
-        }
+        //   for (const i of imageGroup) {
+        //     await ctx.replyWithPhoto(i.media);
+        //   }
+        //   for (const i of videoGroup) {
+        //     await ctx.replyWithVideo(i.media);
+        //   }
+        //   ctx.reply(`✅ Berhasil unduh!`);
+        // }
       } catch (error: any) {
-        ctx.reply(`gagal unduh, coba lagi...`);
+        ctx.reply(`Gagal unduh, coba lagi!`);
       } finally {
         ctx.session.emptySession = true;
       }
     } else {
-      ctx.reply("🔗❌ url/link instagram invalid");
+      ctx.reply("🔗❌ url/link instagram tidak valid");
     }
   }
 
@@ -210,14 +180,14 @@ bot.on("message:text", async (ctx) => {
 
 bot.catch((err) => {
   const ctx = err.ctx;
-  console.error(`Error while handling update ${ctx.update.update_id}:`);
+  console.error(`error while handling update ${ctx.update.update_id}:`);
   const e = err.error;
   if (e instanceof GrammyError) {
-    console.error("Error in request:", e.description);
+    console.error("error in request:", e.description);
   } else if (e instanceof HttpError) {
-    console.error("Could not contact Telegram:", e);
+    console.error("could not contact telegram:", e);
   } else {
-    console.error("Unknown error:", e);
+    console.error("unknown error:", e);
   }
 });
 
